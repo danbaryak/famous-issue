@@ -7,5 +7,6 @@ var Main = require('./Main');
 // Boilerplate code to make your life easier
 FamousEngine.init();
 
-var scene = FamousEngine.createScene();
-scene.addChild(new Main());
+//var scene = FamousEngine.createScene();
+FamousEngine.createScene().addChild(new Main());
+//scene.addChild(new Main());
