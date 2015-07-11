@@ -2,6 +2,8 @@ var Node = require('famous/core/Node');
 var Bubble = require('./Bubble');
 var DOMElement = require('famous/dom-renderables/DOMElement');
 var Position = require('famous/components/Position');
+var Opacity = require('famous/components/Opacity');
+var data = require('./data.json');
 
 function Main() {
     Node.call(this);
@@ -19,17 +21,15 @@ function Main() {
     //this.setAlign(0.5, 0.5, 0)
     //    .setMountPoint(0.5, 0.5, 0);
 
-
-
     var comp = this.addChild();
-
 
     var back = this.addChild();
     back.setSizeMode('default', 'default', 'absolute');
+
     new Position(back).setZ(0);
-    back.setAbsoluteSize(null, null, 1);
+
     this._el = new DOMElement(back)
-        .setProperty('background', 'url(images/back.jpg)')
+        .setProperty('background', 'url(images/bg.png)')
         .setProperty('background-size', 'cover')
         .setProperty('-webkit-background-size', 'cover')
         .setProperty('-moz-background-size', 'cover')
@@ -37,12 +37,19 @@ function Main() {
 
     var size = Math.min(window.innerHeight, window.innerWidth);
 
+    this._veil = new Node();
+    this._vailEl = new DOMElement(this._veil).setProperty('background', 'black');
+    this._veilOpacity = new Opacity(this._veil).set(0);
+    new Position(this._veil).setZ(0);
+    this.addChild(this._veil);
+
+
     this._container = this.addChild()
         .setSizeMode('absolute', 'absolute', 'absolute')
         .setAbsoluteSize(size, size)
-        .setOrigin(.5,.5)
-        .setMountPoint(.5,.5)
-        .setAlign(.5,.5);
+        .setOrigin(0,0)
+        .setMountPoint(0,.0)
+        .setAlign(0.1, 0);
 
     new DOMElement(this._container)
         .setProperty('background', 'url(images/40.png)')
@@ -51,20 +58,35 @@ function Main() {
         .setProperty('-moz-background-size', 'cover')
         .setProperty('-o-background-size', 'cover');
 
-    this._container.addChild(new Bubble('First',0, 0, 0.08,{ background: 'lightgreen' , image: 'images/duck.gif'}));
-    this._container.addChild(new Bubble('First',0, 0.1, 0.08, { background: 'red' }));
-    this._container.addChild(new Bubble('First',0, 0.2, 0.07, { background: 'orange', image: 'images/doggy.gif'}));
-    this._container.addChild(new Bubble('First',0, 0.3, 0.05, { background: 'yellow' }));
-    this._container.addChild(new Bubble('First',0.38, 0.40, 0.1, { background: 'purple' }));
-    this._container.addChild(new Bubble('First',.1, .1, 0.1, { background: 'yellow' }));
-    this._container.addChild(new Bubble('Second',.2, .1, 0.1, { background: 'green' }));
-    this._container.addChild(new Bubble('Second',.2, .2, 0.1, { background: 'violet' }));
-    this._container.addChild(new Bubble('Second',.1, .2, 0.025, { background: 'cyan' }));
 
+    for (var i in data.bubbles) {
+        var bubble = data.bubbles[i];
+        console.log('handling bubble ' + JSON.stringify(bubble));
+        this._container.addChild(new Bubble('Name', bubble.x, bubble.y, bubble.size, {
+            background: bubble.background,
+            image: bubble.image,
+            video: bubble.video
+        }));
+    }
 
 }
 
 Main.prototype = Object.create(Node.prototype);
+
+Main.prototype.nodeMaximized = function nodeMaximized(node) {
+    this._veilOpacity.set(.4, { duration: 500 });
+    this._veil.show();
+    this._container.emit('maximizedNode', { source: node });
+};
+
+Main.prototype.nodeMinimized = function nodeMinimized(node) {
+    this._veilOpacity.set(0, { duration: 500 }, function() {
+        this._veil.hide();
+    }.bind(this));
+
+    this._container.emit('minimizedNode', { source: node });
+};
+
 
 Main.prototype.onSizeChange = function onSizeChange(width, height) {
     console.log('sizeChange ' + width + ', ' + height);
